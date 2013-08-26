@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jzy3d" default="release">
+	<dirname property="dir.basedir" file="${ant.file}"/>
+
+	<!-- Default projects layout -->
+    <property name="dir.src"   		 value="src/"/>
+    <property name="dir.lib"         value="lib/"/>
+	<property name="dir.data"    	 value="data/"/>
+	<property name="dir.build"       value="build/ant/"/>
+    <property name="dir.dist"        value="dist/"/>
+			
+	<!-- Library name & version -->
+	<property name="lib.name"       value="org.wecash"/>
+	<property name="lib.version"    value="1.0"/>
+	<property name="app.name"       value="${lib.name}-${lib.version}"/>
+	<property name="jar.private"       value="${app.name}.jar"/>
+	
+	<!-- Build library -->	
+    <path id="compile.classpath">
+        <fileset dir="${dir.lib}/"><include name="*.jar"/></fileset>
+        <!--<fileset dir="${dir.lib}/poi-3.9/"><include name="*.jar"/></fileset>
+    	<fileset dir="${dir.lib}/poi-3.9/lib"><include name="*.jar"/></fileset>
+    	<fileset dir="${dir.lib}/poi-3.9/ooxml-lib"><include name="*.jar"/></fileset>-->
+    </path>
+    <path id="dir.classpath">
+        <path refid="compile.classpath"/>
+    </path>
+    
+	<target name="clean">
+        <delete dir="${dir.build}"/>
+        <delete dir="${dir.dist}"/>
+    </target>
+
+    <target name="compile" description="Compile Jzy3d Demos with library sources" depends="clean">
+    	<mkdir dir="${dir.build}"/>
+    	
+        <javac destdir="${dir.build}" debug="yes" target="1.5">
+            <classpath refid="dir.classpath"/>
+        	<src path="${dir.src}/demos" />
+        	<src path="${dir.src}/api" />
+        	<src path="${dir.src}/poi" />
+        	<src path="${dir.src}/tests" />
+        </javac>
+    </target>
+	
+	<target name="jar" description="Export in a jar" depends="compile">
+		<mkdir dir="${dir.dist}"/>
+		
+		<pathconvert property="dependencies.classpath" pathsep=" ">
+			<path refid="dir.classpath" />
+			<chainedmapper>
+				<flattenmapper />
+				<globmapper from="*" to="lib/*" />
+			</chainedmapper>
+		</pathconvert>
+		
+        <echo message="Create a jar." />
+		
+        <jar destfile="${dir.dist}/${app.name}/${jar.private}"  >
+            <fileset dir="${dir.build}" >
+	        	<include name="**/*.class"/>
+        	</fileset>
+       	
+        	<manifest>
+                <!--<attribute name="Main-Class" value="org.jzy3d.demos.browser.DemoBrowser"/>-->
+        		<attribute name="Class-Path" value="${dependencies.classpath}" />
+            </manifest>
+        </jar>
+    </target>
+	
+	<target name="distribute" depends="jar">
+		<copy todir="${dir.dist}/${app.name}/lib"><fileset dir="${dir.lib}/"/></copy>
+		<copy todir="${dir.dist}/${app.name}/data"><fileset dir="${dir.data}"/></copy>
+		
+		<copy file="run-wecash.sh" todir="${dir.dist}/${app.name}"/>
+        <copy file="run-wecash.bat" todir="${dir.dist}/${app.name}"/>
+	</target>
+	
+	<target name="zip" depends="distribute">
+		<zip destfile="${dir.dist}/${app.name}.zip" update="false">
+			<fileset dir="${dir.dist}/${app.name}"/>
+		</zip>	
+	</target>
+	
+	<target name="release" depends="zip">
+	</target>
+</project>
